@@ -1,0 +1,110 @@
+<dashboard>
+  <label>GRC Risk Dashboard</label>
+
+  <!-- KPI: Control Coverage % -->
+  <row>
+    <panel>
+      <single>
+        <title>Control Coverage %</title>
+        <search>
+          <query>
+            <![CDATA[
+| inputlookup risk_register.csv
+| stats dc(control_id) as controls_detected
+| append [ | inputlookup control_map.csv | stats dc(control_id) as controls_total ]
+| stats first(controls_detected) as controls_detected first(controls_total) as controls_total
+| eval control_coverage_pct = round((controls_detected/controls_total)*100,2)
+| table control_coverage_pct
+            ]]>
+          </query>
+        </search>
+        <option name="numberPrecision">0</option>
+        <option name="unit">%</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+
+    <!-- KPI: MTTD -->
+    <panel>
+      <single>
+        <title>MTTD (minutes)</title>
+        <search>
+          <query>
+            <![CDATA[
+| inputlookup risk_register.csv
+| eval event_ts=strptime(event_time,"%Y-%m-%d %H:%M:%S"), detect_ts=strptime(detected_time,"%Y-%m-%d %H:%M:%S")
+| where isnotnull(event_ts) AND isnotnull(detect_ts)
+| eval detect_delay_sec = detect_ts - event_ts
+| stats avg(detect_delay_sec) as avg_sec
+| eval MTTD_minutes = round(avg_sec/60,2)
+| table MTTD_minutes
+            ]]>
+          </query>
+        </search>
+        <option name="numberPrecision">2</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- Open Risks by Control (bar) -->
+  <row>
+    <panel>
+      <chart>
+        <title>Open Risks by Control</title>
+        <search>
+          <query>
+            <![CDATA[
+| inputlookup risk_register.csv
+| search status="Open"
+| stats count by control_id control_name
+| sort -count
+            ]]>
+          </query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Residual Risk Trend (line) -->
+  <row>
+    <panel>
+      <chart>
+        <title>Residual Risk Trend</title>
+        <search>
+          <query>
+            <![CDATA[
+| inputlookup risk_register.csv
+| eval _time=strptime(detected_time,"%Y-%m-%d %H:%M:%S")
+| timechart span=1h count by residual_risk
+            ]]>
+          </query>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+
+  <!-- Open vs Closed Over Time (line) -->
+  <row>
+    <panel>
+      <chart>
+        <title>Open vs Closed Risks Over Time</title>
+        <search>
+          <query>
+            <![CDATA[
+| inputlookup risk_register.csv
+| eval _time=strptime(detected_time,"%Y-%m-%d %H:%M:%S")
+| timechart span=1h count by status
+            ]]>
+          </query>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+</dashboard>
