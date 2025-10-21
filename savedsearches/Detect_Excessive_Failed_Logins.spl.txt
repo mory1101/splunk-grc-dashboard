@@ -1,0 +1,9 @@
+| inputlookup auth_logs.csv
+| where like(message,"Failed password%")
+| eval event_time_epoch=strptime(_time,"%Y-%m-%d %H:%M:%S")
+| stats count min(event_time_epoch) as first_time max(event_time_epoch) as last_time by user
+| where count>5
+| eval event_time=strftime(last_time,"%Y-%m-%d %H:%M:%S")
+| eval splunk_query_id="login_failures"
+| lookup control_map splunk_query_id OUTPUT control_id control_name nist_func
+| table user count control_id control_name nist_func event_time

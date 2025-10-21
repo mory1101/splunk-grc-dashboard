@@ -1,0 +1,3 @@
+| inputlookup risk_register.csv
+| eval _time=strptime(detected_time,"%Y-%m-%d %H:%M:%S")
+| timechart span=1h count by status

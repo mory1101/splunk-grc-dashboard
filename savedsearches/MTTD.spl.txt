@@ -1,0 +1,7 @@
+| inputlookup risk_register.csv
+| eval event_ts=strptime(event_time,"%Y-%m-%d %H:%M:%S"), detect_ts=strptime(detected_time,"%Y-%m-%d %H:%M:%S")
+| where isnotnull(event_ts) AND isnotnull(detect_ts)
+| eval detect_delay_sec = detect_ts - event_ts
+| stats avg(detect_delay_sec) as avg_sec
+| eval MTTD_minutes = round(avg_sec/60,2)
+| table MTTD_minutes

@@ -1,0 +1,6 @@
+| inputlookup risk_register.csv
+| stats dc(control_id) as controls_detected
+| append [ | inputlookup control_map.csv | stats dc(control_id) as controls_total ]
+| stats first(controls_detected) as controls_detected first(controls_total) as controls_total
+| eval control_coverage_pct = round((controls_detected/controls_total)*100,2)
+| table control_coverage_pct

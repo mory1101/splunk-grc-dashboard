@@ -1,0 +1,4 @@
+| inputlookup risk_register.csv
+| search status="Open"
+| stats count by control_id control_name
+| sort -count
